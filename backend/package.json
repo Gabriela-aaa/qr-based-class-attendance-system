@@ -5,7 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "db:init": "node src/scripts/initDb.js",
+    "db:migrate:names": "node src/scripts/migrateNameColumns.js",
+    "db:seed:admin": "node src/scripts/seedAdmin.js",
+    "db:migrate:courses": "node src/scripts/migrateCourses.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
