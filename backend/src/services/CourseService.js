@@ -34,6 +34,24 @@ class CourseService {
       conn.release();
     }
   }
+
+  async listCourses({ userID, role }) {
+    if (role === "instructor") {
+      const instructor = await this.courseRepository.findInstructorByUserId(userID);
+      if (!instructor) {
+        return { statusCode: 404, payload: { message: "Instructor profile not found" } };
+      }
+      const courses = await this.courseRepository.listInstructorCourses(instructor.instructorID);
+      return { statusCode: 200, payload: { courses } };
+    }
+
+    if (role === "admin" || role === "student") {
+      const courses = await this.courseRepository.listAllCourses();
+      return { statusCode: 200, payload: { courses } };
+    }
+
+    return { statusCode: 403, payload: { message: "Access denied" } };
+  }
 }
 
 module.exports = CourseService;

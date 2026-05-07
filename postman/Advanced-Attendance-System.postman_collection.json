@@ -1,0 +1,614 @@
+{
+  "info": {
+    "_postman_id": "8f0b7f66-7f66-4f5f-bd78-1f2e6f5f0b99",
+    "name": "Advanced Attendance System API",
+    "description": "Phase-organized API collection for the QR-based attendance system.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "token_admin", "value": "", "type": "string" },
+    { "key": "token_instructor", "value": "", "type": "string" },
+    { "key": "token_student", "value": "", "type": "string" },
+    { "key": "courseID", "value": "1", "type": "string" },
+    { "key": "sessionID", "value": "1", "type": "string" },
+    { "key": "qrToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 - Database and Server Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 - Auth and User Management",
+      "item": [
+        {
+          "name": "Register Student",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student01\",\n  \"password\": \"password123\",\n  \"studentID\": \"STU1001\",\n  \"firstName\": \"Hanna\",\n  \"lastName\": \"Smith\",\n  \"department\": \"Computer Science\",\n  \"year\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/student",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "student"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin (set token_admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_admin', json.token);",
+                  "}",
+                  "pm.collectionVariables.set('token', pm.collectionVariables.get('token_admin'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Instructor (set token_instructor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_instructor', json.token);",
+                  "}",
+                  "pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"inst01\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Student (set token_student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token_student', json.token);",
+                  "}",
+                  "pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student01\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Admin Creates Instructor Account",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_admin'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"inst01\",\n  \"password\": \"password123\",\n  \"firstName\": \"Grace\",\n  \"lastName\": \"Miller\",\n  \"department\": \"Computer Science\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/instructors",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "instructors"]
+            }
+          }
+        },
+        {
+          "name": "Get My Student Profile",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/student-profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "student-profile"]
+            }
+          }
+        },
+        {
+          "name": "Update My Student Profile",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Hanna\",\n  \"lastName\": \"Smith\",\n  \"department\": \"Software Engineering\",\n  \"year\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/student-profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "student-profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 - Courses, Sessions, QR, Eligibility",
+      "item": [
+        {
+          "name": "Admin Adds Course",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_admin'));"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('courseID', String(json.course.courseID));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseCode\": \"CS301\",\n  \"courseName\": \"Web Engineering\",\n  \"department\": \"Computer Science\",\n  \"creditHour\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            }
+          }
+        },
+        {
+          "name": "List Courses (Any Auth User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            }
+          }
+        },
+        {
+          "name": "Instructor Creates Session (QR Generated)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('sessionID', String(json.session.sessionID));",
+                  "  pm.collectionVariables.set('qrToken', json.session.qrToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseID\": {{courseID}},\n  \"sessionDate\": \"2026-05-08\",\n  \"startTime\": \"09:00\",\n  \"gpsLocation\": \"6.5244,3.3792\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            }
+          }
+        },
+        {
+          "name": "Instructor Lists My Sessions",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "my"]
+            }
+          }
+        },
+        {
+          "name": "Student Checks My Eligibility",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/eligibility/my?courseID={{courseID}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "eligibility", "my"],
+              "query": [{ "key": "courseID", "value": "{{courseID}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 - Student Marks Attendance with QR",
+      "item": [
+        {
+          "name": "Student Marks Attendance",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionID\": {{sessionID}},\n  \"qrToken\": \"{{qrToken}}\",\n  \"gpsLocation\": \"6.5244,3.3792\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/mark",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "mark"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 5 - Attendance History Dashboard",
+      "item": [
+        {
+          "name": "Student Attendance History",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_student'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "history"]
+            }
+          }
+        },
+        {
+          "name": "Instructor Attendance History",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 6 - Reports and Activity Logs",
+      "item": [
+        {
+          "name": "Instructor Report Summary",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports?courseID={{courseID}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports"],
+              "query": [{ "key": "courseID", "value": "{{courseID}}" }]
+            }
+          }
+        },
+        {
+          "name": "Admin Report Summary",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_admin'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports"]
+            }
+          }
+        },
+        {
+          "name": "Admin Activity Logs",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_admin'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/activity-logs?limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "activity-logs"],
+              "query": [{ "key": "limit", "value": "100" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7 - Export PDF and Excel",
+      "item": [
+        {
+          "name": "Export PDF (Instructor/Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const roleToken = pm.collectionVariables.get('token_instructor') || pm.collectionVariables.get('token_admin');",
+                  "pm.collectionVariables.set('token', roleToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/export?format=pdf&courseID={{courseID}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "export"],
+              "query": [
+                { "key": "format", "value": "pdf" },
+                { "key": "courseID", "value": "{{courseID}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Excel (CSV) (Instructor/Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const roleToken = pm.collectionVariables.get('token_instructor') || pm.collectionVariables.get('token_admin');",
+                  "pm.collectionVariables.set('token', roleToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/export?format=excel&courseID={{courseID}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "export"],
+              "query": [
+                { "key": "format", "value": "excel" },
+                { "key": "courseID", "value": "{{courseID}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Instructor Closes Session",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', pm.collectionVariables.get('token_instructor'));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionID}}/close",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionID}}", "close"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

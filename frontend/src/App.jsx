@@ -1,8 +1,7 @@
 import { useState } from "react";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
-import StudentDashboardPage from "./pages/StudentDashboardPage";
+import RoleDashboardRouter from "./components/RoleDashboardRouter";
 
 function App() {
   const [screen, setScreen] = useState("login");
@@ -54,18 +53,8 @@ function App() {
       )}
 
       <div className="legacy-panel">
-        {authUser?.role === "admin" ? (
-          <AdminDashboardPage
-            authToken={authToken}
-            currentUser={authUser}
-            onLogout={handleLogout}
-          />
-        ) : authUser?.role === "student" ? (
-          <StudentDashboardPage
-            authToken={authToken}
-            currentUser={authUser}
-            onLogout={handleLogout}
-          />
+        {authUser ? (
+          <RoleDashboardRouter authUser={authUser} authToken={authToken} onLogout={handleLogout} />
         ) : screen === "login" ? (
           <LoginPage
             onSwitchRegister={() => setScreen("register")}

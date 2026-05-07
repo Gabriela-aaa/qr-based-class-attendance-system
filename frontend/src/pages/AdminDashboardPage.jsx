@@ -1,12 +1,11 @@
 import { useState } from "react";
-import AuthApiService from "../services/AuthApiService";
+import DashboardShell from "../components/DashboardShell";
 import FormValidator from "../services/FormValidator";
-
-const authApiService = new AuthApiService();
+import apiClient from "../services/apiClient";
 
 function AdminDashboardPage({ authToken, currentUser, onLogout }) {
-  const [showCreateInstructor, setShowCreateInstructor] = useState(false);
-  const [showAddCourse, setShowAddCourse] = useState(false);
+  const [activeTab, setActiveTab] = useState("instructor");
+  const [logs, setLogs] = useState([]);
   const [instructorForm, setInstructorForm] = useState({
     username: "",
     password: "",
@@ -47,7 +46,7 @@ function AdminDashboardPage({ authToken, currentUser, onLogout }) {
         return;
       }
 
-      const data = await authApiService.createInstructor(instructorForm, authToken);
+      const data = await apiClient.createInstructor(instructorForm, authToken);
       setMessage(
         `${data.message}. Assigned Instructor ID: ${data.instructor.instructorID}`
       );
@@ -79,7 +78,7 @@ function AdminDashboardPage({ authToken, currentUser, onLogout }) {
       }
 
       const payload = { ...courseForm, creditHour: Number(courseForm.creditHour) };
-      const data = await authApiService.addCourse(payload, authToken);
+      const data = await apiClient.addCourse(payload, authToken);
       setMessage(
         `${data.message}. Course ID: ${data.course.courseID}, Code: ${data.course.courseCode}`
       );
@@ -96,40 +95,60 @@ function AdminDashboardPage({ authToken, currentUser, onLogout }) {
     }
   }
 
+  async function handleLoadLogs() {
+    setLoading(true);
+    setMessage("");
+    setError("");
+    try {
+      const data = await apiClient.getActivityLogs(authToken, 100);
+      setLogs(data.logs || []);
+      setMessage("Activity logs loaded");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleExport(format) {
+    setLoading(true);
+    setError("");
+    try {
+      const { blob, filename } = await apiClient.exportReport(authToken, format);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      setMessage(`Export complete: ${filename}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div>
-      <h2>Administrator Dashboard</h2>
-      <p>Logged in as: {currentUser.username} (admin)</p>
-
-      <div className="legacy-nav">
-        <button
-          type="button"
-          onClick={() => {
-            setShowCreateInstructor(true);
-            setShowAddCourse(false);
-            setMessage("");
-            setError("");
-          }}
-        >
-          Create Instructor Account
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setShowAddCourse(true);
-            setShowCreateInstructor(false);
-            setMessage("");
-            setError("");
-          }}
-        >
-          Add Course
-        </button>
-        <button type="button" onClick={onLogout}>
-          Logout
-        </button>
-      </div>
-
-      {showCreateInstructor && (
+    <DashboardShell
+      title="Administrator Dashboard"
+      subtitle={`Logged in as: ${currentUser.username} (admin)`}
+      tabs={[
+        { id: "instructor", label: "Create Instructor Account" },
+        { id: "course", label: "Add Course" },
+        { id: "reports", label: "Activity Logs / Reports" },
+      ]}
+      activeTab={activeTab}
+      onTabChange={(tabId) => {
+        setActiveTab(tabId);
+        setMessage("");
+        setError("");
+      }}
+      onLogout={onLogout}
+      message={message}
+      error={error}
+    >
+      {activeTab === "instructor" && (
         <div className="legacy-panel">
           <h3>Create Instructor Account</h3>
           <form className="legacy-form" onSubmit={handleCreateInstructor}>
@@ -158,12 +177,10 @@ function AdminDashboardPage({ authToken, currentUser, onLogout }) {
             </button>
           </form>
 
-          {message && <p className="success">{message}</p>}
-          {error && <p className="error">{error}</p>}
         </div>
       )}
 
-      {showAddCourse && (
+      {activeTab === "course" && (
         <div className="legacy-panel">
           <h3>Add Course</h3>
           <form className="legacy-form" onSubmit={handleAddCourse}>
@@ -196,11 +213,29 @@ function AdminDashboardPage({ authToken, currentUser, onLogout }) {
             </button>
           </form>
 
-          {message && <p className="success">{message}</p>}
-          {error && <p className="error">{error}</p>}
         </div>
       )}
-    </div>
+
+      {activeTab === "reports" && (
+        <div className="legacy-panel">
+          <h3>Reports and Activity Logs</h3>
+          <button type="button" onClick={handleLoadLogs} disabled={loading}>
+            Load Activity Logs
+          </button>
+          <button type="button" onClick={() => handleExport("pdf")} disabled={loading}>
+            Export PDF
+          </button>
+          <button type="button" onClick={() => handleExport("excel")} disabled={loading}>
+            Export Excel
+          </button>
+          {logs.map((log) => (
+            <p key={log.logID}>
+              [{log.timestamp}] {log.activityType} by {log.username || "system"}
+            </p>
+          ))}
+        </div>
+      )}
+    </DashboardShell>
   );
 }
 

@@ -18,6 +18,50 @@ class CourseRepository {
     );
     return result.insertId;
   }
+
+  async listAllCourses() {
+    const [rows] = await this.pool.execute(
+      `
+        SELECT
+          c.course_id AS courseID,
+          c.course_code AS courseCode,
+          c.course_name AS courseName,
+          c.department,
+          c.credit_hour AS creditHour,
+          c.instructor_id AS instructorID
+        FROM courses c
+        ORDER BY c.course_id DESC
+      `
+    );
+    return rows;
+  }
+
+  async listInstructorCourses(instructorID) {
+    const [rows] = await this.pool.execute(
+      `
+        SELECT
+          c.course_id AS courseID,
+          c.course_code AS courseCode,
+          c.course_name AS courseName,
+          c.department,
+          c.credit_hour AS creditHour,
+          c.instructor_id AS instructorID
+        FROM courses c
+        WHERE c.instructor_id = ?
+        ORDER BY c.course_id DESC
+      `,
+      [instructorID]
+    );
+    return rows;
+  }
+
+  async findInstructorByUserId(userID) {
+    const [rows] = await this.pool.execute(
+      "SELECT instructor_id AS instructorID FROM instructors WHERE user_id = ?",
+      [userID]
+    );
+    return rows[0] || null;
+  }
 }
 
 module.exports = CourseRepository;

@@ -31,5 +31,7 @@ router.post(
   courseController.addCourse
 );
 
+router.get("/", authMiddleware.requireAuth, courseController.listCourses);
+
 module.exports = router;
 

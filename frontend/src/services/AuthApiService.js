@@ -79,6 +79,107 @@ class AuthApiService {
       body: JSON.stringify(payload),
     });
   }
+
+  getCourses(token) {
+    return this.request("/courses", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  createSession(payload, token) {
+    return this.request("/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  closeSession(sessionID, token) {
+    return this.request(`/sessions/${sessionID}/close`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  getMySessions(token) {
+    return this.request("/sessions/my", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  markAttendance(payload, token) {
+    return this.request("/attendance/mark", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  getAttendanceHistory(token) {
+    return this.request("/attendance/history", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  getReportSummary(token, query = "") {
+    return this.request(`/reports${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  getMyEligibility(token, courseID) {
+    return this.request(`/reports/eligibility/my?courseID=${courseID}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  getActivityLogs(token, limit = 100) {
+    return this.request(`/reports/activity-logs?limit=${limit}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async exportReport(token, format, query = "") {
+    const response = await fetch(`${this.baseUrl}/reports/export?format=${format}${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || "Export failed");
+    }
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("Content-Disposition") || "";
+    const filenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+    const filename = filenameMatch ? filenameMatch[1] : `attendance-summary.${format === "pdf" ? "pdf" : "csv"}`;
+    return { blob, filename };
+  }
 }
 
 export default AuthApiService;

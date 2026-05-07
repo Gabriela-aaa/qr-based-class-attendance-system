@@ -61,6 +61,20 @@ class FormValidator {
     }
     return null;
   }
+
+  static validateSessionCreate(form) {
+    if (!form.courseID) return "Course is required";
+    if (!form.sessionDate) return "Session date is required";
+    if (!form.startTime) return "Start time is required";
+    return null;
+  }
+
+  static validateAttendanceMark(form) {
+    const sessionID = Number(form.sessionID);
+    if (!Number.isInteger(sessionID) || sessionID <= 0) return "Valid session ID is required";
+    if (!form.qrToken?.trim()) return "QR token is required";
+    return null;
+  }
 }
 
 export default FormValidator;
