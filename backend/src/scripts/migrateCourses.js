@@ -1,5 +1,13 @@
 const mysql = require("mysql2/promise");
-require("dotenv").config();
+const { loadBackendEnv } = require("../config/loadEnv");
+
+loadBackendEnv();
+
+const dbName = process.env.DB_NAME?.trim();
+if (!dbName) {
+  console.error("FATAL: DB_NAME must be set in backend/.env.");
+  process.exit(1);
+}
 
 async function hasColumn(connection, columnName) {
   const [rows] = await connection.execute(
@@ -11,7 +19,7 @@ async function hasColumn(connection, columnName) {
         AND COLUMN_NAME = ?
       LIMIT 1
     `,
-    [process.env.DB_NAME || "advanced_attendance", columnName]
+    [dbName, columnName]
   );
   return rows.length > 0;
 }
@@ -22,7 +30,7 @@ async function runMigration() {
     port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "advanced_attendance",
+    database: dbName,
   });
 
   try {

@@ -1,7 +1,15 @@
 const fs = require("fs/promises");
 const path = require("path");
 const mysql = require("mysql2/promise");
-require("dotenv").config();
+const { loadBackendEnv } = require("../config/loadEnv");
+
+loadBackendEnv();
+
+const dbName = process.env.DB_NAME?.trim();
+if (!dbName) {
+  console.error("FATAL: DB_NAME must be set in backend/.env before running db:init.");
+  process.exit(1);
+}
 
 async function initDb() {
   const host = process.env.DB_HOST || "localhost";
@@ -20,8 +28,14 @@ async function initDb() {
   });
 
   try {
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${dbName}\`
+        CHARACTER SET utf8mb4
+        COLLATE utf8mb4_unicode_ci`
+    );
+    await connection.query(`USE \`${dbName}\``);
     await connection.query(schemaSql);
-    console.log("Database schema initialized successfully.");
+    console.log(`Database schema initialized successfully in "${dbName}".`);
   } finally {
     await connection.end();
   }
@@ -35,6 +49,7 @@ initDb().catch((err) => {
   };
 
   console.error(base);
+  console.error(`Target database name (DB_NAME): ${dbName}`);
   console.error(`Connection target: ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 3306}`);
   console.error(`DB user: ${process.env.DB_USER || "root"}`);
   console.error(`Error code: ${details.code}`);
@@ -50,4 +65,3 @@ initDb().catch((err) => {
 
   process.exit(1);
 });
-

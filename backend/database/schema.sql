@@ -6,11 +6,7 @@
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
 
-CREATE DATABASE IF NOT EXISTS advanced_attendance
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE advanced_attendance;
+-- Database is created by `npm run db:init` using DB_NAME from backend/.env (see initDb.js).
 
 -- Core users table (User object)
 CREATE TABLE IF NOT EXISTS users (

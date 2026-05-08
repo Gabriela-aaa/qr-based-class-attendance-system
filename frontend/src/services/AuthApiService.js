@@ -1,5 +1,5 @@
 class AuthApiService {
-  constructor(baseUrl = "http://localhost:5000/api") {
+  constructor(baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api") {
     this.baseUrl = baseUrl;
   }
 
@@ -9,12 +9,26 @@ class AuthApiService {
       ...(options.headers || {}),
     };
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...options,
-      headers: mergedHeaders,
-    });
+    let response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, {
+        ...options,
+        headers: mergedHeaders,
+      });
+    } catch (error) {
+      throw new Error(
+        "Failed to reach backend API. Confirm backend is running and VITE_API_BASE_URL is correct."
+      );
+    }
 
-    const data = await response.json();
+    let data = null;
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const rawText = await response.text();
+      data = { message: rawText || "Request failed" };
+    }
     if (!response.ok) {
       const validationDetails = Array.isArray(data.errors)
         ? data.errors.map((item) => item.msg || item.path).join(", ")
@@ -164,12 +178,17 @@ class AuthApiService {
   }
 
   async exportReport(token, format, query = "") {
-    const response = await fetch(`${this.baseUrl}/reports/export?format=${format}${query}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    let response;
+    try {
+      response = await fetch(`${this.baseUrl}/reports/export?format=${format}${query}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      throw new Error("Failed to reach backend API for export.");
+    }
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.message || "Export failed");

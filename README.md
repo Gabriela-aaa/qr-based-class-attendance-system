@@ -43,11 +43,15 @@ If using Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
+If `backend/.env` does not exist, create it before running `npm run dev`.
+
 Important `.env` values:
 
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` for MySQL
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` for MySQL — **`DB_NAME` must exactly match the database name in MySQL** (e.g. as shown in phpMyAdmin), or run `npm run db:init` to create it from `DB_NAME`.
 - `JWT_SECRET` for authentication
 - `CLIENT_ORIGIN` for frontend URL (set to your frontend port, usually `http://localhost:5173` for Vite)
+
+The backend **does not start** until MySQL accepts a connection to `DB_NAME`. Use `GET /api/health` after a successful start to confirm status.
 
 ### Initialize database
 
@@ -66,7 +70,16 @@ npm run db:seed:admin
 npm run dev
 ```
 
+### API smoke test (optional)
+
+With the backend running in another terminal:
+
+```bash
+npm run test:e2e
+```
+
 Backend should run on `http://localhost:5000` by default.
+If MySQL is down or `DB_NAME` does not exist, the process exits with a clear error after the connection check.
 
 ## 3) Setup Frontend
 
@@ -75,6 +88,7 @@ Open a new terminal and run:
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
